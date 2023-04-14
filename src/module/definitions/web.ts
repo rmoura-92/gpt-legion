@@ -10,6 +10,9 @@ import {
   countTokens,
 } from "../../util";
 import { defineModule } from "../define-module";
+import axios, { AxiosResponse } from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 export default defineModule({
   name: "web",
@@ -83,6 +86,48 @@ export default defineModule({
         }
       },
     },
+
+    download: {
+      description: "Download a file from the web.",
+      parameters: {
+        url: {
+          description: "The URL of the file or page to download",
+        },
+      },
+      async execute({
+        parameters: { url },
+        context: { agentId },
+        sendMessage,
+      }) {
+        try {
+          // console.log({ maxCompletionTokens });
+          const filePath = await downloadUrl(url, path.resolve(__dirname, '.downloads'));
+
+          if (!filePath) {
+            sendMessage(
+              messageBuilder.ok(
+                agentId,
+                `It failed to download the url provided: ${url}, please find another link`
+              )
+            );
+          }
+
+          sendMessage(
+            messageBuilder.ok(
+              agentId,
+              `Here is the path with the file downloaded: ${filePath}`
+            )
+          );
+        } catch (e: any) {
+          sendMessage(
+            messageBuilder.error(
+              agentId,
+              `Error downloading ${url}: ${e.message}`
+            )
+          );
+        }
+      },
+    }
   },
 });
 
@@ -214,4 +259,22 @@ export async function getPageSummary(
   await browser.close();
 
   return summary;
+}
+
+export async function downloadUrl(url: string, outputFolder: string) {
+  try {
+    const response: AxiosResponse<ArrayBuffer> = await axios.get(url, {
+      responseType: 'arraybuffer',
+    });
+
+    const fileName = path.basename(url);
+    const outputPath = path.join(outputFolder, fileName);
+
+    fs.writeFileSync(outputPath, Buffer.from(response.data));
+    console.log(`File downloaded to ${outputPath}`);
+
+    return fileName;
+  } catch (e: any) {
+    console.error(`Failed to download the file: ${e.message}`);
+  }
 }
