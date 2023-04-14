@@ -8,8 +8,12 @@ export class RedisMessageBus implements MessageBus {
   private channel = "messages";
 
   constructor() {
-    this.publisher = createClient();
-    this.subscriber = createClient();
+    this.publisher = createClient({
+      url: process.env.REDIS_URL,
+    });
+    this.subscriber = createClient({
+      url: process.env.REDIS_URL,
+    });
   }
 
   subscribe(listener: (message: Message) => void): void {
