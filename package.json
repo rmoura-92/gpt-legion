@@ -11,6 +11,10 @@
     "test": "jest",
     "test:watch": "jest --watch"
   },
+  "bin": {
+    "gpt-legion": "./dist/main.js",
+    "delete-store": "./bin/delete-store.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
